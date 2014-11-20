@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical" >
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:orientation="vertical" >
+        <TextView android:id="@+id/text_tou"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:scrollbars="vertical"
+                  android:text="This software is provided on an 'AS IS'  BASIS. TO THE FULLEST EXTENT PERMITTED BY LAW, CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, RELATING TO THE SOFTWARE, AND ALL SUCH WARRANTIES, INCLUDING WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ARE EXPRESSLY DISCLAIMED. WITHOUT LIMITING THE GENERALITY OF THE FOREGOING, CARNEGIE MELLON UNIVERSITY DOES NOT MAKE ANY WARRANTY OF ANY KIND RELATING TO EXCLUSIVITY, INFORMATIONAL CONTENT, ERROR-FREE OPERATION, RESULTS TO BE OBTAINED FROM USE, FREEDOM FROM PATENT, TRADEMARK AND COPYRIGHT INFRINGEMENT AND/OR FREEDOM FROM THEFT OF TRADE SECRETS.
+                                                                                
+\n\nEXCEPT TO THE EXTENT PROHIBITED BY LAW AND ONLY TO THE EXTENT PROHIBITED, CARNEGIE MELLON UNIVERSITY SHALL NOT BE LIABLE TO LICENSEE OR ANY THIRD PARTY FOR ANY REASON WHATSOVER, INCLUDING FOR REASONS ARISING  OUT OF LICENSEE'S USE OF, OR INABILITY TO USE, THE SOFTWARE, FOR LOSS OF PROFITS OR FOR DIRECT, INCIDENTAL, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES, EVEN IF CARNEGIE MELLON UNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES OR HAS OR GAINS KNOWLEDGE OF THE EXISTENCE OF SUCH DAMAGES." />
+    </LinearLayout>
+    <Button
+            android:id="@+id/back2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:text="Back" />
+</LinearLayout> 

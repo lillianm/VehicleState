@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="fill_parent"
+              android:orientation="vertical" >
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:orientation="vertical" >
+
+        <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save Location:"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Spinner
+                android:id="@+id/spinner_savelocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        <TextView
+                android:id="@+id/textViewUpdateRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Update Rate:"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Spinner
+                android:id="@+id/spinner_updaterate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        <TextView
+                android:id="@+id/textViewResolution"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Capture Quality:"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Spinner
+                android:id="@+id/spinner_resolution"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        <Button
+                android:id="@+id/button_upload"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload to Dropbox" />
+
+        <Button
+                android:id="@+id/button_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Capture: Camera" />
+
+        <Button
+                android:id="@+id/button_license"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="License" />
+
+        <Button
+                android:id="@+id/button_tou"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Terms of Use" />
+
+
+        <Button
+                android:id="@+id/back_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:text="Back" />
+
+
+    </LinearLayout>
+
+
+    <Button
+            android:id="@+id/button_delete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:text="Delete Stored Data" />
+
+
+
+</LinearLayout>
