@@ -9,10 +9,10 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/icon2"
         android:label="@string/app_name" >
         <activity
-            android:name="MainActivity"
+            android:name=".MainActivity"
             android:label="RoadVid"
             android:screenOrientation="portrait" >
             <intent-filter>
@@ -21,7 +21,29 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- <activity
+
+        <receiver android:name="ri.cmu.edu.vehiclestateyi.GPSCollector$GPSReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MainActivity" />
+                <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.start" />
+                <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.stop" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="ri.cmu.edu.vehiclestateyi.SensorService$SensorReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MainActivity" />
+                <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.start" />
+                <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.stop" />
+            </intent-filter>
+        </receiver>
+        
+
+        <service android:name="ri.cmu.edu.vehiclestateyi.GPSCollector" >
+        </service>
+        <service android:name="ri.cmu.edu.vehiclestateyi.SensorService" />
+
+        <!--
+        <activity
             android:name=".DBRoulette"
             android:configChanges="orientation|keyboard"
             android:label="@string/app_name" >
@@ -45,7 +67,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
- -->    </application>
+        -->
+    </application>
 
     <uses-feature android:name="android.hardware.camera" />
 

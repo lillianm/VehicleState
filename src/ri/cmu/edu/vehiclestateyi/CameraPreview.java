@@ -41,38 +41,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		mHolder = getHolder();
 		mHolder.addCallback(this);
 
-		//zoomController and zoomBar
-//		zoomControl = (ZoomControls) this.context.findViewById(R.id.CAMERA_ZOOM_CONTROLS);
-//		zoomBar = (SeekBar)  this.context.findViewById(R.id.seekBar);
-//		p = mCamera.getParameters();
-//		maxZoomLevel = p.getMaxZoom();
-//		zoomBar.setMax(maxZoomLevel);	
-//		setZoomControlListeners();
-//		
-//		zoomBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(){
-//
-//			@Override
-//			public void onProgressChanged(SeekBar seekBar, int progress,
-//					boolean fromUser) {
-//				currentZoomLevel = progress;
-//				if (currentZoomLevel < maxZoomLevel) {
-//					p.setZoom(currentZoomLevel);
-//					mCamera.setParameters(p);
-//					Log.v(TAG,""+currentZoomLevel);
-//				}
-//			}
-//
-//			@Override
-//			public void onStartTrackingTouch(SeekBar seekBar) {
-//			}
-//
-//			@Override
-//			public void onStopTrackingTouch(SeekBar seekBar) {
-//			}
-//
-//		});
-//
-//
+		//
 	}
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
@@ -90,26 +59,11 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		
+
 	}
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-		// If your preview can change or rotate, take care of those events here.
-		// Make sure to stop the preview before resizing or reformatting it.
-		// stop preview before making changes
-//		try {
-//			mCamera.stopPreview();
-//		} catch (Exception e){
-//			// ignore: tried to stop a non-existent preview
-//		}
-
-
-
-		// set preview size and make any resize, rotate or
-		// reformatting changes here
-
-		// start preview with new settings
 		try {
 			mCamera.setPreviewDisplay(mHolder);
 			mCamera.startPreview();
@@ -163,7 +117,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						int currentlevel = currentZoomLevel++;
 						p.setZoom(currentlevel);
 						mCamera.setParameters(p);
-						
+
 						Log.v(TAG,""+currentlevel);
 
 

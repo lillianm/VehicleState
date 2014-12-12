@@ -23,9 +23,7 @@ public class DirectoryUpload {
 
     File uploadDir;
 
-    String imgDir = "img";
-    String vidDir = "vid";
-
+    
     DbxFileSystem dbxFileSystem;
     DbxAccountManager dbxAccountManager;
 
@@ -36,17 +34,18 @@ public class DirectoryUpload {
         }
     }
 
-    public void setUploadDir(File dir) {
-        if (!dir.isDirectory()) {
-            throw new IllegalArgumentException();
-        }
-        uploadDir = dir;
-    }
+//    public void setUploadDir(String dir) {
+//        if (!dir.isDirectory()) {
+//            throw new IllegalArgumentException();
+//        }
+//        uploadDir = dir;
+//    }
 
     public void setUploadDir(String dir) {
         uploadDir = new File(dir);
         if (!uploadDir.isDirectory()) {
-            throw new IllegalArgumentException();
+        	Log.e("FileUpload",dir);
+            //throw new IllegalArgumentException();
         }
     }
 
@@ -100,13 +99,6 @@ public class DirectoryUpload {
                     continue;
                 }
 
-//                try {
-//                    out.writeFromExistingFile(in, false);
-//                    out.close();
-//                } catch (IOException e) {
-//                    Log.e("DirectoryUpload", "Error writing to " + in.getName() + " : " + e.getMessage());
-//                }
-
 
                 Log.e("completed", in.getName());
             }
@@ -118,8 +110,8 @@ public class DirectoryUpload {
         MainActivity.interruptedUpload = false;
         MainActivity.uploading = true;
         h.sendEmptyMessage(0);
-        uploadSubDir(imgDir);
-        uploadSubDir(vidDir);
+        uploadSubDir(Protocol.UPLOAD_IMAGE_DIR);
+        uploadSubDir(Protocol.UPLOAD_VIDEO_DIR);
 
         if (!MainActivity.interruptedUpload) {
             MainActivity.upToDate = true;

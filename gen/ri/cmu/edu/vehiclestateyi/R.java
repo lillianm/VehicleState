@@ -12,34 +12,37 @@ public final class R {
     }
     public static final class drawable {
         public static final int ic_launcher=0x7f020000;
+        public static final int icon1=0x7f020001;
+        public static final int icon2=0x7f020002;
+        public static final int road=0x7f020003;
     }
     public static final class id {
-        public static final int auth_button=0x7f060008;
+        public static final int auth_button=0x7f060007;
         public static final int back1=0x7f06001a;
         public static final int back2=0x7f060001;
         public static final int back_button=0x7f060017;
         public static final int button_capture=0x7f060004;
         public static final int button_delete=0x7f060018;
-        public static final int button_exit=0x7f060007;
+        public static final int button_exit=0x7f060006;
         public static final int button_license=0x7f060015;
-        public static final int button_settings=0x7f060006;
+        public static final int button_settings=0x7f060005;
         public static final int button_toggle=0x7f060014;
         public static final int button_tou=0x7f060016;
-        public static final int button_upload=0x7f060005;
-        public static final int image_view=0x7f06000a;
+        public static final int button_upload=0x7f060013;
+        public static final int image_view=0x7f060009;
         public static final int layout=0x7f060002;
-        public static final int logged_in_display=0x7f060009;
-        public static final int photo_button=0x7f06000d;
-        public static final int roulette_button=0x7f06000b;
-        public static final int spinner_resolution=0x7f060013;
-        public static final int spinner_savelocation=0x7f06000f;
-        public static final int spinner_updaterate=0x7f060011;
-        public static final int textView1=0x7f06000e;
-        public static final int textViewResolution=0x7f060012;
-        public static final int textViewUpdateRate=0x7f060010;
+        public static final int logged_in_display=0x7f060008;
+        public static final int photo_button=0x7f06000c;
+        public static final int roulette_button=0x7f06000a;
+        public static final int spinner_resolution=0x7f060012;
+        public static final int spinner_savelocation=0x7f06000e;
+        public static final int spinner_updaterate=0x7f060010;
+        public static final int textView1=0x7f06000d;
+        public static final int textViewResolution=0x7f060011;
+        public static final int textViewUpdateRate=0x7f06000f;
         public static final int text_license=0x7f060019;
         public static final int text_tou=0x7f060000;
-        public static final int upload_folder=0x7f06000c;
+        public static final int upload_folder=0x7f06000b;
         public static final int view_preview=0x7f060003;
     }
     public static final class layout {

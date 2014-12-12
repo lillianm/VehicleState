@@ -1,10 +1,14 @@
 package ri.cmu.edu.vehiclestateyi;
 
 import android.app.Activity;
-
+import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.ActivityManager.RunningServiceInfo;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.LightingColorFilter;
 import android.hardware.SensorManager;
@@ -26,6 +30,7 @@ import com.dropbox.sync.android.DbxException;
 
 public class MainActivity extends Activity {
 
+	public static boolean DEBUG = false;
 	static CameraController mCamera = null;
 	static MetadataLogger mMetadataLogger = null;
 	static DirectoryUpload mDirectoryUpload = null;
@@ -34,9 +39,8 @@ public class MainActivity extends Activity {
 
 	int FRAME_RATE = 10;   /* Frames of video per second */
 	static int SENSOR_RATE = SensorManager.SENSOR_DELAY_NORMAL;
-	static String MasterDir = "VehicleStateEstimation";
+	public static volatile String curDirName;
 
-	private static boolean externalStore = false;
 	private String[] saveLocations = {"MediaFolder", "ExternalSD"};
 
 	public static boolean isRunning = false;
@@ -54,9 +58,7 @@ public class MainActivity extends Activity {
 
 	private boolean screenOn = false;
 
-	/* Sensor */
-	public static ContextParams cp;
-	public GPSTracker gpsTracker;
+
 	/* Dropbox */
 
 	private static final String appKey = "490rsj1cg518cqv";
@@ -68,15 +70,10 @@ public class MainActivity extends Activity {
 	private static final String TAG = "MainActivity";
 
 	private MainActivity self = this;
-	//public static StateMediator sm;
-	public static SensorThread sensor_thread;
-	/*
-	 * Called when the activity is first created.
-	 */
 
 	private Button toggleButton = null;
-	private Button uploadButton;
-	public static String current_folder_timeStamp;
+
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -88,26 +85,14 @@ public class MainActivity extends Activity {
 		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
 		//sm = new StateMediator(this);
 		StateMediator.setCameraMode(settings.getBoolean("cameraOn", false));
-
-		//		BluetoothChatService ble = new BluetoothChatService(this, h);
-		//		ble.start();
-		//		//startService(new Intent(this, BluetoothChatService.class));
-		//		//OBDII obd = new OBDII(this, BluetoothChatService.mAdapter, mMetadataLogger);
-		//		//obd.initOBD();
-		//		//Log.e(TAG, obd.isConnected() +"");
-
-		mMetadataLogger = new MetadataLogger();
 		mCamera = new CameraController(this);
-		if(sensor_thread != null){
-			sensor_thread = null;
-		}
-		sensor_thread = new SensorThread(this,mMetadataLogger);
+
 
 
 		upToDate = settings.getBoolean("upToDate", false);
-		externalStore = settings.getInt("saveLocation", 0) == 1;
+		StateMediator.externalStore = settings.getInt("saveLocation", 0) == 1;
 		mCamera.setResolution(settings.getInt("resolution", 0));
-		noFiles = settings.getBoolean("noFiles", false);
+		//noFiles = settings.getBoolean("noFiles", false);
 
 		mDbxAcctMgr = null;
 
@@ -118,30 +103,51 @@ public class MainActivity extends Activity {
 		}
 		else {
 			finalizeOutput();
-
 			setMainScreen();
 		}
-		cp = new ContextParams();
-		if(gpsTracker != null){
-			gpsTracker = null;
-
-		} 
-		gpsTracker = new GPSTracker(this); 
-		Intent intent = new Intent(this, GPSTracker.class);
-		startService(intent);
-
-
+		
 		toggleButton = (Button) findViewById(R.id.button_toggle);
-		uploadButton = (Button) findViewById(R.id.button_upload);
-		uploadButton.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.dropbox.android.sample");
-				startActivity(LaunchIntent);
-			}
-		});
 	}
+
+		
+	/* GPS and Sensor Service Helper functions */
+	private boolean isGPSServiceRunning() {
+		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+			if (service.service.getShortClassName().equals(GPSCollector.class.getSimpleName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/* GPS and Sensor Connecton */
+	private ServiceConnection gpsServiceConnection = new ServiceConnection(){
+
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder binder) {
+			Log.d(TAG,"GPS Connected");
+		}
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			Log.d(TAG,"GPS disconnected");			
+		}
+	};
+	
+	private ServiceConnection sensorServiceConnection = new ServiceConnection(){
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder binder) {
+			Log.w(TAG,"Sensor connected");
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			Log.d(TAG,"Sensor service disconnected");			
+		}
+
+	};
+
+	/* End of GPS helper functions*/
 
 	private void finalizeOutput() {
 		try {
@@ -149,20 +155,6 @@ public class MainActivity extends Activity {
 		} catch (DbxException.Unauthorized unauthorized) {
 			unauthorized.printStackTrace();
 		}
-	}
-
-	public static long freeMemory() {
-		if (mMetadataLogger == null) {
-			return 0;
-		}
-		if(MetadataLogger.outputFolder != null){
-			Log.e("clicked", "getting mem for " + MetadataLogger.outputFolder.getPath());
-			StatFs statFs = new StatFs(MetadataLogger.outputFolder.getPath());
-
-
-			return (long) ((statFs.getAvailableBlocks()) *(statFs.getBlockSize() / 1048576.0));
-		}
-		return 1;
 	}
 
 	private void setMainScreen() {
@@ -184,8 +176,8 @@ public class MainActivity extends Activity {
 		settingsButton.setOnClickListener(settingsListener);
 
 
-		
-		
+
+
 		//getNewOutputFolder();
 
 		mCamera.prepareCamera(this, (LinearLayout) findViewById(R.id.view_preview));
@@ -294,21 +286,8 @@ public class MainActivity extends Activity {
 		captureButton.getBackground().clearColorFilter();
 	}
 
+	/* functions for future development */
 	public void takePicture() {
-		upToDate = false;
-		noFiles = false;
-		interruptedUpload = true;
-		Log.e("clicked", "Is there free memory?");
-		if (freeMemory() < 70) {
-			Log.e("clicked", "there is " + freeMemory());
-			return;
-		}
-
-		mCamera.takeContinuousPictures();
-		getNewOutputFolder();
-		if(sensor_thread == null || sensor_thread.isInterrupted()) sensor_thread.start();
-
-		Log.e(TAG,"take Continuous Pictures");
 
 	}
 
@@ -424,10 +403,10 @@ public class MainActivity extends Activity {
 		public void onItemSelected(AdapterView<?> arg0, View view1, int pos, long id) {
 			String val = (String) arg0.getItemAtPosition(pos);
 			if (val.equals(saveLocations[0])) {
-				externalStore = false;
+				StateMediator.externalStore = false;
 			}
 			else if(val.equals(saveLocations[1])) {
-				externalStore = true;
+				StateMediator.externalStore = true;
 			}
 			else {
 				throw new IllegalArgumentException("Not sure how this got here");
@@ -537,7 +516,7 @@ public class MainActivity extends Activity {
 					StateMediator.setCameraRunningStatus(true);
 				}
 				else{ 
-					mCamera.stopTakingPictures();
+					//mCamera.stopTakingPictures();
 					StateMediator.setCameraRunningStatus(false);
 				}
 			}
@@ -545,9 +524,16 @@ public class MainActivity extends Activity {
 				/* start new video captreu */
 				if(!StateMediator.cameraRunning){
 					if(!StateMediator.cameraRunning){
-						getNewOutputFolder();
+						if (mDirectoryUpload != null) {
+
+							mDirectoryUpload.setUploadDir(Protocol.MEDIA_STORAGE_DIR);
+						}
+
+
 					}
 					StateMediator.setCameraRunningStatus(true);
+
+					curDirName = Util.getNewOutputFolder();
 
 					mCamera.recordVideo();
 					Log.e(TAG,"RECORDING ");
@@ -563,22 +549,15 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private View.OnClickListener uploadListener;
+	private View.OnClickListener uploadListener = new View.OnClickListener() {
 
-	{
-		uploadListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				uploading = true;
-				new Thread(new Runnable () {
-					@Override
-					public void run() {
-						mDirectoryUpload.upload(h);
-					}
-				}).start();
-			}
-		};
-	}
+		@Override
+		public void onClick(View v) {
+			Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.dropbox.android.sample");
+			startActivity(LaunchIntent);
+		}
+	};
+
 
 
 	private View.OnClickListener exitListener = new View.OnClickListener() {
@@ -591,75 +570,15 @@ public class MainActivity extends Activity {
 	private View.OnClickListener settingsListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
+			if(StateMediator.cameraRunning){
+				mCamera.stopVideo();
+				StateMediator.setCameraRunningStatus(false);
+
+			}
 			setSettingsScreen();
 		}
 	};
 
-	public static File getNewOutputFolder() {
-		String ext = "";
-		if (StateMediator.cameraMode) {
-			ext = mDirectoryUpload.imgDir;
-		} else {
-			ext = mDirectoryUpload.vidDir;
-			//ext = Environment.getExternalStorageDirectory().toString()+"/Pictures/VehicleStateEstimation/vid/";
-
-		}
-		// To be safe, you should check that the SDCard is mounted
-		// using Environment.getExternalStorageState() before doing this.
-		File mediaStorageDir;
-		if (!externalStore) {
-			mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-					Environment.DIRECTORY_PICTURES), MasterDir);
-		}
-		else {
-			mediaStorageDir = new File("/storage/extSdCard/VehicleStateEstimation");
-		}
-		// This location works best if you want the created images to be shared
-		// between applications and persist after your app has been uninstalled.
-
-		// Create the storage directory if it does not exist
-		if (! mediaStorageDir.exists()){
-			if (! mediaStorageDir.mkdirs()){
-				Log.e("MainActivity", "failed to create VehicleStateEstimation directory");
-				return null;
-			}
-		}
-
-		if (mDirectoryUpload != null) {
-			mDirectoryUpload.setUploadDir(mediaStorageDir);
-		}
-
-		File subMediaStorageDir = new File(mediaStorageDir.getPath()  + File.separator + ext);
-
-		// Create the storage directory if it does not exist
-		if (! subMediaStorageDir.exists()) {
-			if (! subMediaStorageDir.mkdirs()){
-				Log.e("MainActivity", "failed to create VehicleStateEstimation directory");
-				return null;
-			}
-		}
-
-		// Create a media file name
-		current_folder_timeStamp = new SimpleDateFormat(Protocol.dateFormat).format(new Date());
-		File outputFolder;
-
-		outputFolder = new File(subMediaStorageDir.getPath() + File.separator + current_folder_timeStamp);
-		if (! outputFolder.exists()) {
-			if (! outputFolder.mkdirs()) {
-				Log.e("MainActivity", "failed to create local directory");
-				return null;
-			}
-		}
-
-		Log.e("mmetadatalogger", String.valueOf(mMetadataLogger));
-
-		if (mMetadataLogger != null) {
-			mMetadataLogger.setOutputDirectory(outputFolder);
-			mMetadataLogger.setTime(current_folder_timeStamp);
-		}
-
-		return outputFolder;
-	}
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -678,7 +597,6 @@ public class MainActivity extends Activity {
 
 	private void pause() {
 		if(mCamera!=null) mCamera.pause();
-		if(sensor_thread!=null) sensor_thread.pause();
 
 	}
 
@@ -688,19 +606,30 @@ public class MainActivity extends Activity {
 		super.onResume();
 
 		Log.w("On resume", "On Resume");
-		if(mMetadataLogger == null) mMetadataLogger = new MetadataLogger();
+		//if(mMetadataLogger == null) mMetadataLogger = new MetadataLogger();
 		if(mCamera == null) {
 			mCamera = new CameraController(this);
 		}
-		if(gpsTracker == null){
-			gpsTracker = new GPSTracker(this); 
-			Intent intent = new Intent(this, GPSTracker.class);
-			startService(intent);
-		}
 
-		if(sensor_thread == null){
-			sensor_thread = new SensorThread(this,mMetadataLogger);
+		Intent gpsIntent  = new Intent(this, GPSCollector.class);
+		if(!isGPSServiceRunning()){
+			//Log.d(TAG,"GPS service is not running");
+			startService(gpsIntent);
+			//
+
 		}
+		bindService(gpsIntent, gpsServiceConnection, Context.BIND_AUTO_CREATE);
+
+		Intent sensorIntent  = new Intent(this, SensorService.class);
+		if(!isGPSServiceRunning()){
+			//Log.d(TAG,"GPS service is not running");
+			startService(sensorIntent);
+			//
+
+		}
+		bindService(sensorIntent, sensorServiceConnection, Context.BIND_AUTO_CREATE);
+
+		/* start GPS service is null*/
 
 	}
 
@@ -721,25 +650,27 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onStop(){
-		onDestroy();
+		super.onStop();
+		mCamera.kill();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if(sensor_thread !=null){
-			sensor_thread.kill();
-			sensor_thread = null;
-
-		}
 		mCamera.kill();
-		Intent intent = new Intent(this, GPSTracker.class);
-		stopService(intent);
+		Intent gpsintent = new Intent(this, GPSCollector.class);
+		unbindService(gpsServiceConnection);
+		stopService(gpsintent);
+		Intent sensorIntent = new Intent(this, SensorService.class);
+		unbindService(sensorServiceConnection);
+		stopService(sensorIntent);
 	}
 
 	void showToast(String msg) {
 		Toast error = Toast.makeText(self, msg, Toast.LENGTH_LONG);
 		error.show();
 	}
+
+
 
 }

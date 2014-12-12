@@ -13,6 +13,10 @@ import ri.cmu.edu.vehiclestateyi.Protocol.SensorNames;
 
 public class MetadataLogger {
 
+	public String curDirName = null;
+	public MetadataLogger(String dir){
+		this.curDirName = dir;
+	}
 	public static File outputFolder = null;
 	public String timeStamp;
 
@@ -37,12 +41,14 @@ public class MetadataLogger {
 
 
 			Log.e("LOGGER",filename);
-			String fullPath = new File(outputFolder.getPath() + File.separator + timeStamp + "-" + filename).getPath();
-			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
+			if(curDirName!=null){
+				String fullPath = new File( curDirName+ "/"+ filename).getPath();
+				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 
-			out.println(starttime);
+				out.println(starttime);
 
-			out.close();
+				out.close();
+			}
 
 		} catch (IOException e) {
 			// Uh oh!
@@ -57,7 +63,7 @@ public class MetadataLogger {
 
 			String filename = Protocol.STARTSTOP_FILENAME;
 			Log.e("LOGGER",filename);
-			String fullPath = new File(outputFolder.getPath() + File.separator + timeStamp + "-" + filename).getPath();
+			String fullPath = new File(curDirName + "/" + filename).getPath();
 			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 
 			out.println(endtime);
@@ -78,7 +84,7 @@ public class MetadataLogger {
 
 			String filename = Protocol.fileExtension.get(sensorName);
 			//Log.e("LOGGER",filename);
-			String fullPath = new File(outputFolder.getPath() + File.separator + timeStamp + "-" + filename).getPath();
+			String fullPath = new File(curDirName + "/"+ filename).getPath();
 			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 			/* current time*/
 			out.println(time +": "+value[0] + ", " + value[1] + ", "+value[2]);
@@ -97,8 +103,9 @@ public class MetadataLogger {
 
 
 			String filename = Protocol.fileExtension.get(Protocol.SensorNames.GPS);
-			Log.e("LOGGER",filename);
-			String fullPath = new File(outputFolder.getPath() + File.separator + timeStamp + "-" + filename).getPath();
+			
+			String fullPath = new File(curDirName + "/" + filename).getPath();
+			Log.e("LOGGER",fullPath);
 			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 			/* current time*/
 			out.println(time +": "+d+", "+f);

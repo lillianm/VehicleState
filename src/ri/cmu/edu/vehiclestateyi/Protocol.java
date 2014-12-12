@@ -2,8 +2,13 @@ package ri.cmu.edu.vehiclestateyi;
 
 import java.util.HashMap;
 
+import android.content.Intent;
+
 public class Protocol {
 	
+	
+	final public static int ALARM_SERVICE = "ALARM_SERVICE".hashCode();
+	final public static int REQUEST_GPS = "REQUEST_GPS".hashCode();
 	final public  static String dateFormat = "yyyyMMdd_HHmmss_SSS";
 	
 	final public String EXT_KPH = "kph.txt";
@@ -17,6 +22,18 @@ public class Protocol {
 	final public String EXT_STSP = "startstop.txt";
 	final public String EXT_ALL = "all.txt";
 
+	
+	/* Intents */
+	public static String BROADCAST_ACTION_START  = "ri.cmu.edu.vehiclestateyi.MainActivity.start";
+	public static String BROADCAST_ACTION_STOP  = "ri.cmu.edu.vehiclestateyi.MainActivity.stop";
+	
+	/* File constants */
+	
+	public static String CURRENT_DIR_NAME = "CURRENT_DIR_NAME";
+	public static String UPLOAD_IMAGE_DIR = "img";
+    public static String UPLOAD_VIDEO_DIR = "vid";
+    public static String MASTER_DIR = "VehicleStateEstimation";
+    public static String MEDIA_STORAGE_DIR = "/storage/extSdCard/VehicleStateEstimation/";
 	public static enum SensorNames {
 		GPS, GYROSCOPE, LINEAR_ACCELERATION,ORIENTATION,GRAVITY //ACCELEROMETER
 	};
@@ -34,9 +51,10 @@ public class Protocol {
 	}
 	public final static int GPS_OUTPUT_ZERO = "GPS_OUTPUT_ZERO".hashCode();
 	public final static String STARTSTOP_FILENAME = "startstop.txt";
-	public final static int STOP_ALARM = "STOP_ALARM".hashCode();
-	public final static int PICTURE_CALLBACK_FINISHED = "PICTURE_CALLBACK_FINISHED".hashCode();
-	public final static int TAKE_PICTURE = "TAKE_PICTURE".hashCode();
-	public final static int STOP_TAKING_PICTURE = "STOP_TAKING_PICTURE".hashCode();
-	public final static int  LOG_CONTEXT = "LOG_CONTEXT".hashCode();
+	//public final static int STOP_ALARM = "STOP_ALARM".hashCode();
+	//public final static int PICTURE_CALLBACK_FINISHED = "PICTURE_CALLBACK_FINISHED".hashCode();
+	//public final static int TAKE_PICTURE = "TAKE_PICTURE".hashCode();
+	//public final static int STOP_TAKING_PICTURE = "STOP_TAKING_PICTURE".hashCode();
+	//public final static int  LOG_CONTEXT = "LOG_CONTEXT".hashCode();
+	
 }

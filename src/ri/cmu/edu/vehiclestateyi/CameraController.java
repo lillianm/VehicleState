@@ -2,6 +2,7 @@ package ri.cmu.edu.vehiclestateyi;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.media.CamcorderProfile;
@@ -36,7 +37,7 @@ public class CameraController {
 	public MediaRecorder mMediaRecorder = null;
 	private CameraPreview mPreview = null;
 	private ZoomControls zoomControl;
-
+	
 	private static StateMediator sm = null;
 
 
@@ -45,16 +46,16 @@ public class CameraController {
 
 	private String[] videoResolutions = {"1920, 1080", "1280, 720", "720, 480"};
 
-	public WriteThread write_thread;
-	public Alarm alarm = null;
+	//public WriteThread write_thread;
+	//public Alarm alarm = null;
 	public MainActivity ctx;
 	public Handler cHandler = new Handler(){
 		@Override
 		public void handleMessage(Message msg) {
-			if(msg.what == Protocol.TAKE_PICTURE){
-				if(mCamera !=null);
-				capturePicture();
-			}
+//			if(msg.what == Protocol.TAKE_PICTURE){
+//				if(mCamera !=null);
+//				capturePicture();
+//			}
 		}
 	};
 
@@ -166,7 +167,7 @@ public class CameraController {
 						e.printStackTrace();  					}
 
 					if(!StateMediator.cameraRunning){
-						MainActivity.getNewOutputFolder();
+						Util.getNewOutputFolder();
 					}
 					StateMediator.setCameraRunningStatus(true);
 
@@ -207,23 +208,27 @@ public class CameraController {
 	}
 
 	/* start taking continuous pictures */
-	public void takeContinuousPictures() {
-		StateMediator.cameraRunning = true;
-		alarm = new Alarm(this);
-		alarm.start();
-
-	}
-
-	public void stopTakingPictures(){
-		try {
-			StateMediator.cameraRunning = false;
-			write_thread.wHandler.sendEmptyMessage(Protocol.STOP_TAKING_PICTURE);
-			alarm.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace(); 
-		}
-
-	}
+//	public void takeContinuousPictures() {
+//		StateMediator.cameraRunning = true;
+//		alarm = new Alarm(this);
+//		alarm.start();
+//		Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
+//		intent.putExtra(Protocol.CURRENT_DIR_NAME, ctx.curDirName);
+//		ctx.sendBroadcast(intent);
+//
+//	}
+//
+//	public void stopTakingPictures(){
+//		try {
+//			StateMediator.cameraRunning = false;
+//			//write_thread.wHandler.sendEmptyMessage(Protocol.STOP_TAKING_PICTURE);
+//			/* modify this to set footer*/
+//			alarm.join();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace(); 
+//		}
+//
+//	}
 	public String[] getResolutions() {
 		List sizes;
 		//if(sm ==null) sm = MainActivity.sm;
@@ -261,11 +266,7 @@ public class CameraController {
 		@Override
 		public void onPictureTaken(byte[] data, Camera camera) {
 
-			//			pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-			//			if (pictureFile == null){
-			//				Log.d("CameraActivity", "Error creating media file, check storage permissions: ");
-			//				return;
-			//			}
+		
 			cache.add(data);
 
 			Log.v("Picture CAllback", cache.size()+"");
@@ -274,7 +275,7 @@ public class CameraController {
 			}
 			/* inform alarm thread that the photo taking is successful*/
 			if(StateMediator.cameraRunning = false) {
-				alarm.alarmHandler.sendEmptyMessage(Protocol.PICTURE_CALLBACK_FINISHED);
+				//alarm.alarmHandler.sendEmptyMessage(Protocol.PICTURE_CALLBACK_FINISHED);
 			}
 
 		}
@@ -288,10 +289,18 @@ public class CameraController {
 
 		// initialize video camera
 		if (prepareVideoRecorder()) {
-			mMediaRecorder.start();
+			Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
+			intent.putExtra(Protocol.CURRENT_DIR_NAME, MainActivity.curDirName);
+			ctx.sendBroadcast(intent);
+			
+						mMediaRecorder.start();
 			StateMediator.startCapturing();
-			if(!MainActivity.sensor_thread.isAlive())MainActivity.sensor_thread.start();
-			//startWriteThread();	
+			MetadataLogger logger = new MetadataLogger(MainActivity.curDirName);
+			logger.setTimestampHeader();
+
+						
+		    
+						//startWriteThread();	
 		} else {
 			// prepare didn't work, release the camera
 			releaseMediaRecorder();
@@ -299,32 +308,47 @@ public class CameraController {
 	}
 	public void stopVideo(){
 		mMediaRecorder.stop();  // stop the recording
-
+		
 		mCamera.lock();         // take camera access back from MediaRecorder
 		releaseMediaRecorder(); // release the MediaRecorder object
 		StateMediator.stopCapturing();
+		Intent intent = new Intent(Protocol.BROADCAST_ACTION_STOP);
+		//intent.putExtra(Protocol.CURRENT_DIR_NAME, ctx.curDirName);
+		ctx.sendBroadcast(intent);
+
+
 	}
 
 	/** Create a file Uri for saving an image or video */
-	private static Uri getOutputMediaFileUri(int type){
+	private Uri getOutputMediaFileUri(int type){
 		return Uri.fromFile(getOutputMediaFile(type));
 	}
 
 	/** Create a File for saving an image or video */
-	static File getOutputMediaFile(int type) {
+	File getOutputMediaFile(int type) {
 		// To be safe, you should check that the SDCard is mounted
 		// using Environment.getExternalStorageState() before doing this.
 
-		File mediaStorageDir = MetadataLogger.outputFolder;
+//		if(ctx == null){
+//			Log.e(TAG,"ctx  is null");
+//			
+//		}
+//		else{
+//			if(ctx.curDirName == null){
+//				Log.e(TAG,"CURDIRNAME == null");
+//			}
+//		}
+		File mediaStorageDir = new File(ctx.curDirName);
 		Log.e("outputFolder", String.valueOf(mediaStorageDir));
 		//String timeStamp = new SimpleDateFormat(Protocol.dateFormat).format(new Date());
 		File mediaFile;
 		if (type == MEDIA_TYPE_IMAGE){
 			mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-					"IMG_"+ MainActivity.current_folder_timeStamp + ".jpg");
+					"IMG_"+ "hehe" + ".jpg");
 		} else if(type == MEDIA_TYPE_VIDEO) {
 			mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-					"VID_"+ MainActivity.current_folder_timeStamp + ".mp4");
+					"VID_"+ "hehe" + ".mp4");
+			Log.e("CameraController",mediaFile.getPath());
 		} else {
 			return null;
 		}
