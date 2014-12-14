@@ -19,59 +19,56 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.*;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxException;
 
-//import ri.cmu.edu.vehiclestateyi.dropbox.DBRoulette;
-
 public class MainActivity extends Activity {
 
 	public static boolean DEBUG = false;
+
+	/* Components */
 	static CameraController mCamera = null;
 	static MetadataLogger mMetadataLogger = null;
 	static DirectoryUpload mDirectoryUpload = null;
 
-	public static final String PREFS_NAME = "MyPrefsFile";
-
-	int FRAME_RATE = 10;   /* Frames of video per second */
-	static int SENSOR_RATE = SensorManager.SENSOR_DELAY_NORMAL;
+	/* the folder name of video and context data files*/
 	public static volatile String curDirName;
-
-	private String[] saveLocations = {"MediaFolder", "ExternalSD"};
-
-	public static boolean isRunning = false;
-
+	
 	public static boolean upToDate = false;
 	public static boolean uploading = false;
 	public static boolean noFiles = false;
 	public static boolean interruptedUpload = false;
 
-	//volatile boolean cameraOn = false;
-	long clickDelay = 1000;
-	long lastClick;
-
-	private String[] updateRates = {"Normal", "Game", "UI", "Fast"};
-
-	private boolean screenOn = false;
+	
 
 
 	/* Dropbox */
-
 	private static final String appKey = "490rsj1cg518cqv";
 	private static final String appSecret = "6y4kj34bqt1pgxu";
-
 	private DbxAccountManager mDbxAcctMgr;
 
-	private final static int REQUEST_LINK_TO_DBX = 14;
+
+	/* inner states */
+	private long lastClick;
+	private boolean screenOn = false;
 	private static final String TAG = "MainActivity";
-
 	private MainActivity self = this;
-
 	private Button toggleButton = null;
+
+	/* Handler */
+	Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			if (msg.what == 0) {
+				Log.e("uploading!", String.valueOf(uploading));
+				setUploadText((Button) findViewById(R.id.button_upload));
+			}
+			if(msg.what == Protocol.GPS_OUTPUT_ZERO){
+				Toast.makeText(getApplicationContext(), "GPS output is ZERO!", Toast.LENGTH_SHORT).show();;
+			}
+		}
+	};
 
 
 	@Override
@@ -82,12 +79,10 @@ public class MainActivity extends Activity {
 		/* Keep screen lit */
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 		//sm = new StateMediator(this);
-		StateMediator.setCameraMode(settings.getBoolean("cameraOn", false));
+		StateMediator.setCameraMode(settings.getString("cameraOn", Protocol.VIDEO_MODE));
 		mCamera = new CameraController(this);
-
-
 
 		upToDate = settings.getBoolean("upToDate", false);
 		StateMediator.externalStore = settings.getInt("saveLocation", 0) == 1;
@@ -99,17 +94,17 @@ public class MainActivity extends Activity {
 		//mDbxAcctMgr = DbxAccountManager.getInstance(getApplicationContext(), appKey, appSecret);
 
 		if (mDbxAcctMgr != null && !mDbxAcctMgr.hasLinkedAccount()) {
-			mDbxAcctMgr.startLink(this, REQUEST_LINK_TO_DBX);
+			mDbxAcctMgr.startLink(this, Protocol.REQUEST_LINK_TO_DBX);
 		}
 		else {
 			finalizeOutput();
 			setMainScreen();
 		}
-		
+
 		toggleButton = (Button) findViewById(R.id.button_toggle);
 	}
 
-		
+
 	/* GPS and Sensor Service Helper functions */
 	private boolean isGPSServiceRunning() {
 		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -133,7 +128,7 @@ public class MainActivity extends Activity {
 			Log.d(TAG,"GPS disconnected");			
 		}
 	};
-	
+
 	private ServiceConnection sensorServiceConnection = new ServiceConnection(){
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder binder) {
@@ -174,11 +169,6 @@ public class MainActivity extends Activity {
 
 		settingsButton = (Button) findViewById(R.id.button_settings);
 		settingsButton.setOnClickListener(settingsListener);
-
-
-
-
-		//getNewOutputFolder();
 
 		mCamera.prepareCamera(this, (LinearLayout) findViewById(R.id.view_preview));
 	}
@@ -221,7 +211,7 @@ public class MainActivity extends Activity {
 		touButton.setOnClickListener(touListener);
 
 		saveLocationSpinner = (Spinner) findViewById(R.id.spinner_savelocation);
-		ArrayAdapter saveLocationAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, saveLocations);
+		ArrayAdapter saveLocationAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, Protocol.saveLocations);
 		saveLocationSpinner.setAdapter(saveLocationAdapter);
 		saveLocationSpinner.setOnItemSelectedListener(saveLocationListener);
 
@@ -232,30 +222,18 @@ public class MainActivity extends Activity {
 		resolutionSpinner.setOnItemSelectedListener(resolutionListener);
 
 		updateRateSpinner = (Spinner) findViewById(R.id.spinner_updaterate);
-		ArrayAdapter updateRateAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, updateRates);
+		ArrayAdapter updateRateAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, Protocol.updateRates);
 		updateRateSpinner.setAdapter(updateRateAdapter);
 		updateRateSpinner.setOnItemSelectedListener(updateRateListener);
 
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 		resolutionSpinner.setSelection(settings.getInt("resolution", 0));
 		saveLocationSpinner.setSelection(settings.getInt("saveLocation", 0));
 		updateRateSpinner.setSelection(settings.getInt("updateRate", 0));
 
 	}
 
-	Handler h = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			if (msg.what == 0) {
-				Log.e("uploading!", String.valueOf(uploading));
-				setUploadText((Button) findViewById(R.id.button_upload));
-			}
-			if(msg.what == Protocol.GPS_OUTPUT_ZERO){
-				Toast.makeText(getApplicationContext(), "GPS output is ZERO!", Toast.LENGTH_SHORT).show();;
-			}
-		}
-	};
-
+	/* Dropbox uploading status updating */
 	private void setUploadText(Button uploadButton) {
 		if (uploading) {
 			Log.e("uploading!", "now it should say the right thing...");
@@ -278,7 +256,7 @@ public class MainActivity extends Activity {
 			captureButton.getBackground().setColorFilter(new LightingColorFilter(0xFFFFFFFF, 0xFFFF0000));
 			return;
 		}
-		if (StateMediator.cameraMode) {
+		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
 			captureButton.setText("Capture Image");
 		} else {
 			captureButton.setText("Capture Video");
@@ -293,7 +271,7 @@ public class MainActivity extends Activity {
 
 
 	private void setToggleText(Button toggleButton) {
-		if (StateMediator.cameraMode) {
+		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
 			toggleButton.setText("Capture Image");
 		} else {
 			toggleButton.setText("Capture Video");
@@ -363,7 +341,7 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-			SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+			SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 			SharedPreferences.Editor editor = settings.edit();
 			editor.putInt("updateRate", position);
 
@@ -383,7 +361,7 @@ public class MainActivity extends Activity {
 		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 			mCamera.setResolution(position);
 
-			SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+			SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 			SharedPreferences.Editor editor = settings.edit();
 			editor.putInt("resolution", position);
 
@@ -402,16 +380,16 @@ public class MainActivity extends Activity {
 		@Override
 		public void onItemSelected(AdapterView<?> arg0, View view1, int pos, long id) {
 			String val = (String) arg0.getItemAtPosition(pos);
-			if (val.equals(saveLocations[0])) {
+			if (val.equals(Protocol.saveLocations[0])) {
 				StateMediator.externalStore = false;
 			}
-			else if(val.equals(saveLocations[1])) {
+			else if(val.equals(Protocol.saveLocations[1])) {
 				StateMediator.externalStore = true;
 			}
 			else {
 				throw new IllegalArgumentException("Not sure how this got here");
 			}
-			SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+			SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 			SharedPreferences.Editor editor = settings.edit();
 			editor.putInt("saveLocation", pos);
 
@@ -476,9 +454,9 @@ public class MainActivity extends Activity {
 			resolutionSpinner.setAdapter(resolutionAdapter);
 			resolutionSpinner.setOnItemSelectedListener(resolutionListener);
 
-			SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+			SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 			SharedPreferences.Editor editor = settings.edit();
-			editor.putBoolean("cameraOn", StateMediator.cameraMode);
+			editor.putString("cameraOn", StateMediator.cameraMode);
 
 			// Commit the edits!
 			editor.commit();
@@ -503,16 +481,17 @@ public class MainActivity extends Activity {
 	private View.OnClickListener captureListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			if (System.currentTimeMillis() - lastClick < clickDelay) {
+			if (System.currentTimeMillis() - lastClick < Parameters.CLICK_DELAY) {
 				return;
 			}
 			lastClick = System.currentTimeMillis();
 			Log.w(TAG,"LISTENER ");
 			Log.w(TAG,""+StateMediator.cameraRunning);
-			//toggleCapture();
-			if(StateMediator.cameraMode){
+			
+			/* */
+			if(StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)){
 				if(!StateMediator.cameraRunning) { 
-					takePicture(); 
+					//takePicture(); 
 					StateMediator.setCameraRunningStatus(true);
 				}
 				else{ 
@@ -573,7 +552,6 @@ public class MainActivity extends Activity {
 			if(StateMediator.cameraRunning){
 				mCamera.stopVideo();
 				StateMediator.setCameraRunningStatus(false);
-
 			}
 			setSettingsScreen();
 		}
@@ -582,7 +560,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == REQUEST_LINK_TO_DBX) {
+		if (requestCode == Protocol.REQUEST_LINK_TO_DBX) {
 			if (resultCode == Activity.RESULT_OK) {
 				finalizeOutput();
 				setMainScreen();
@@ -635,7 +613,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onPause() {
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 		SharedPreferences.Editor editor = settings.edit();
 		editor.putBoolean("upToDate", upToDate);
 		editor.putBoolean("noFiles", noFiles);

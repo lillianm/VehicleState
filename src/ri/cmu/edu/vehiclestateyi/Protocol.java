@@ -6,7 +6,14 @@ import android.content.Intent;
 
 public class Protocol {
 	
+	public static final String CAMERA_MODE = "CAMERA";
+	public static final String VIDEO_MODE = "VIDEO";
+	public static final String PREFS_NAME = "MyPrefsFile";
 	
+	static String[] saveLocations = {"MediaFolder", "ExternalSD"};
+	static String[] updateRates = {"Normal", "Game", "UI", "Fast"};
+
+	final static int REQUEST_LINK_TO_DBX = 14;
 	final public static int ALARM_SERVICE = "ALARM_SERVICE".hashCode();
 	final public static int REQUEST_GPS = "REQUEST_GPS".hashCode();
 	final public  static String dateFormat = "yyyyMMdd_HHmmss_SSS";
@@ -51,10 +58,5 @@ public class Protocol {
 	}
 	public final static int GPS_OUTPUT_ZERO = "GPS_OUTPUT_ZERO".hashCode();
 	public final static String STARTSTOP_FILENAME = "startstop.txt";
-	//public final static int STOP_ALARM = "STOP_ALARM".hashCode();
-	//public final static int PICTURE_CALLBACK_FINISHED = "PICTURE_CALLBACK_FINISHED".hashCode();
-	//public final static int TAKE_PICTURE = "TAKE_PICTURE".hashCode();
-	//public final static int STOP_TAKING_PICTURE = "STOP_TAKING_PICTURE".hashCode();
-	//public final static int  LOG_CONTEXT = "LOG_CONTEXT".hashCode();
-	
+		
 }

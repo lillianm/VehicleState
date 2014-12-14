@@ -37,27 +37,16 @@ public class CameraController {
 	public MediaRecorder mMediaRecorder = null;
 	private CameraPreview mPreview = null;
 	private ZoomControls zoomControl;
-	
+
 	private static StateMediator sm = null;
 
 
 	public Queue<byte[]> cache = null;
 	File pictureFile = null;
 
-	private String[] videoResolutions = {"1920, 1080", "1280, 720", "720, 480"};
 
-	//public WriteThread write_thread;
-	//public Alarm alarm = null;
+
 	public MainActivity ctx;
-	public Handler cHandler = new Handler(){
-		@Override
-		public void handleMessage(Message msg) {
-//			if(msg.what == Protocol.TAKE_PICTURE){
-//				if(mCamera !=null);
-//				capturePicture();
-//			}
-		}
-	};
 
 	public CameraController(MainActivity activity) {
 		ctx = activity;
@@ -67,7 +56,7 @@ public class CameraController {
 			myCamParam = c.getParameters();
 			c.release();
 		}
-		
+
 		cache = new LinkedList<byte[]>();
 	}
 
@@ -207,32 +196,10 @@ public class CameraController {
 		return true;
 	}
 
-	/* start taking continuous pictures */
-//	public void takeContinuousPictures() {
-//		StateMediator.cameraRunning = true;
-//		alarm = new Alarm(this);
-//		alarm.start();
-//		Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
-//		intent.putExtra(Protocol.CURRENT_DIR_NAME, ctx.curDirName);
-//		ctx.sendBroadcast(intent);
-//
-//	}
-//
-//	public void stopTakingPictures(){
-//		try {
-//			StateMediator.cameraRunning = false;
-//			//write_thread.wHandler.sendEmptyMessage(Protocol.STOP_TAKING_PICTURE);
-//			/* modify this to set footer*/
-//			alarm.join();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace(); 
-//		}
-//
-//	}
 	public String[] getResolutions() {
 		List sizes;
 		//if(sm ==null) sm = MainActivity.sm;
-		if (StateMediator.cameraMode) {
+		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
 			sizes = myCamParam.getSupportedPictureSizes();
 		}
 		else {
@@ -251,7 +218,7 @@ public class CameraController {
 		List sizes;
 		Camera.Size setting;
 		//if(sm == null) sm = MainActivity.sm;
-		if (StateMediator.cameraMode) {
+		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
 			sizes = myCamParam.getSupportedPictureSizes();
 		}
 		else {
@@ -266,7 +233,7 @@ public class CameraController {
 		@Override
 		public void onPictureTaken(byte[] data, Camera camera) {
 
-		
+
 			cache.add(data);
 
 			Log.v("Picture CAllback", cache.size()+"");
@@ -292,15 +259,14 @@ public class CameraController {
 			Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
 			intent.putExtra(Protocol.CURRENT_DIR_NAME, MainActivity.curDirName);
 			ctx.sendBroadcast(intent);
-			
-						mMediaRecorder.start();
+
+			mMediaRecorder.start();
 			StateMediator.startCapturing();
 			MetadataLogger logger = new MetadataLogger(MainActivity.curDirName);
 			logger.setTimestampHeader();
 
-						
-		    
-						//startWriteThread();	
+
+
 		} else {
 			// prepare didn't work, release the camera
 			releaseMediaRecorder();
@@ -308,7 +274,7 @@ public class CameraController {
 	}
 	public void stopVideo(){
 		mMediaRecorder.stop();  // stop the recording
-		
+
 		mCamera.lock();         // take camera access back from MediaRecorder
 		releaseMediaRecorder(); // release the MediaRecorder object
 		StateMediator.stopCapturing();
@@ -326,21 +292,9 @@ public class CameraController {
 
 	/** Create a File for saving an image or video */
 	File getOutputMediaFile(int type) {
-		// To be safe, you should check that the SDCard is mounted
-		// using Environment.getExternalStorageState() before doing this.
-
-//		if(ctx == null){
-//			Log.e(TAG,"ctx  is null");
-//			
-//		}
-//		else{
-//			if(ctx.curDirName == null){
-//				Log.e(TAG,"CURDIRNAME == null");
-//			}
-//		}
 		File mediaStorageDir = new File(ctx.curDirName);
-		Log.e("outputFolder", String.valueOf(mediaStorageDir));
-		//String timeStamp = new SimpleDateFormat(Protocol.dateFormat).format(new Date());
+		Log.d("outputFolder", String.valueOf(mediaStorageDir));
+
 		File mediaFile;
 		if (type == MEDIA_TYPE_IMAGE){
 			mediaFile = new File(mediaStorageDir.getPath() + File.separator +

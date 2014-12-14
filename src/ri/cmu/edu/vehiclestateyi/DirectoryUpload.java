@@ -12,13 +12,6 @@ import android.util.Log;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lars
- * Date: 9/28/13
- * Time: 4:05 PM
- * To change this template use File | Settings | File Templates.
- */
 public class DirectoryUpload {
 
     File uploadDir;
@@ -33,13 +26,6 @@ public class DirectoryUpload {
         	dbxFileSystem = DbxFileSystem.forAccount(dbxAccountManager.getLinkedAccount());
         }
     }
-
-//    public void setUploadDir(String dir) {
-//        if (!dir.isDirectory()) {
-//            throw new IllegalArgumentException();
-//        }
-//        uploadDir = dir;
-//    }
 
     public void setUploadDir(String dir) {
         uploadDir = new File(dir);

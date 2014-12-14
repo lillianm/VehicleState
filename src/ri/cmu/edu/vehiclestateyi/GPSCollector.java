@@ -70,9 +70,6 @@ public class GPSCollector extends Service implements LocationListener {
 		public GPSReceiver(){}
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			// if (!Strings.isNullOrEmpty(intent.getAction())) {
-			//MainApplication myApplication = (MainApplication) context.getApplicationContext();
-			//SharedPreferences sharedPreferences = myApplication.getSharedPreferences(AlarmService.PREFS_NAME,0);
 			if(intent.getAction().equals(Protocol.BROADCAST_ACTION_START)){
 				Log.d(TAG, "GPS Service Start Logging");
 				startLogging = true;
