@@ -15,10 +15,10 @@ import android.hardware.SensorManager;
 import android.os.*;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.*;
-
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxException;
@@ -81,7 +81,7 @@ public class MainActivity extends Activity {
 
 		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 		//sm = new StateMediator(this);
-		StateMediator.setCameraMode(settings.getString("cameraOn", Protocol.VIDEO_MODE));
+		StateMediator.setCameraMode(settings.getBoolean("cameraOn", Protocol.VIDEO_MODE));
 		mCamera = new CameraController(this);
 
 		upToDate = settings.getBoolean("upToDate", false);
@@ -90,9 +90,6 @@ public class MainActivity extends Activity {
 		//noFiles = settings.getBoolean("noFiles", false);
 
 		mDbxAcctMgr = null;
-
-		//mDbxAcctMgr = DbxAccountManager.getInstance(getApplicationContext(), appKey, appSecret);
-
 		if (mDbxAcctMgr != null && !mDbxAcctMgr.hasLinkedAccount()) {
 			mDbxAcctMgr.startLink(this, Protocol.REQUEST_LINK_TO_DBX);
 		}
@@ -256,7 +253,7 @@ public class MainActivity extends Activity {
 			captureButton.getBackground().setColorFilter(new LightingColorFilter(0xFFFFFFFF, 0xFFFF0000));
 			return;
 		}
-		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
+		if (StateMediator.cameraMode == Protocol.CAMERA_MODE) {
 			captureButton.setText("Capture Image");
 		} else {
 			captureButton.setText("Capture Video");
@@ -271,7 +268,7 @@ public class MainActivity extends Activity {
 
 
 	private void setToggleText(Button toggleButton) {
-		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
+		if (StateMediator.cameraMode == Protocol.CAMERA_MODE) {
 			toggleButton.setText("Capture Image");
 		} else {
 			toggleButton.setText("Capture Video");
@@ -456,7 +453,7 @@ public class MainActivity extends Activity {
 
 			SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 			SharedPreferences.Editor editor = settings.edit();
-			editor.putString("cameraOn", StateMediator.cameraMode);
+			editor.putBoolean("cameraOn", StateMediator.cameraMode);
 
 			// Commit the edits!
 			editor.commit();
@@ -489,7 +486,7 @@ public class MainActivity extends Activity {
 			Log.w(TAG,""+StateMediator.cameraRunning);
 			
 			/* */
-			if(StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)){
+			if(StateMediator.cameraMode == Protocol.CAMERA_MODE){
 				if(!StateMediator.cameraRunning) { 
 					//takePicture(); 
 					StateMediator.setCameraRunningStatus(true);
@@ -593,7 +590,7 @@ public class MainActivity extends Activity {
 		if(!isGPSServiceRunning()){
 			//Log.d(TAG,"GPS service is not running");
 			startService(gpsIntent);
-			//
+			
 
 		}
 		bindService(gpsIntent, gpsServiceConnection, Context.BIND_AUTO_CREATE);
@@ -602,7 +599,7 @@ public class MainActivity extends Activity {
 		if(!isGPSServiceRunning()){
 			//Log.d(TAG,"GPS service is not running");
 			startService(sensorIntent);
-			//
+			
 
 		}
 		bindService(sensorIntent, sensorServiceConnection, Context.BIND_AUTO_CREATE);
@@ -629,12 +626,17 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onStop(){
 		super.onStop();
+		/* stop video has already send the stop broadcast */
+		mCamera.stopVideo();
 		mCamera.kill();
+		
+		
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		mCamera.stopVideo();
 		mCamera.kill();
 		Intent gpsintent = new Intent(this, GPSCollector.class);
 		unbindService(gpsServiceConnection);
@@ -642,6 +644,15 @@ public class MainActivity extends Activity {
 		Intent sensorIntent = new Intent(this, SensorService.class);
 		unbindService(sensorServiceConnection);
 		stopService(sensorIntent);
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if ((keyCode == KeyEvent.KEYCODE_BACK)) { //Back key pressed
+	       setMainScreen();
+	        return true;
+	    }
+	    return super.onKeyDown(keyCode, event);
 	}
 
 	void showToast(String msg) {

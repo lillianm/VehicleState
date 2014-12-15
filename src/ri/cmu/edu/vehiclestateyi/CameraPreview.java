@@ -1,12 +1,5 @@
 package ri.cmu.edu.vehiclestateyi;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lars
- * Date: 8/30/13
- * Time: 2:08 PM
- * To change this template use File | Settings | File Templates.
- */
 
 import android.app.Activity;
 import android.content.Context;

@@ -6,8 +6,8 @@ import android.content.Intent;
 
 public class Protocol {
 	
-	public static final String CAMERA_MODE = "CAMERA";
-	public static final String VIDEO_MODE = "VIDEO";
+	public static final boolean CAMERA_MODE = true;
+	public static final boolean VIDEO_MODE = false;
 	public static final String PREFS_NAME = "MyPrefsFile";
 	
 	static String[] saveLocations = {"MediaFolder", "ExternalSD"};

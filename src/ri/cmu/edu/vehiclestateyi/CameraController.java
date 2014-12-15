@@ -199,7 +199,7 @@ public class CameraController {
 	public String[] getResolutions() {
 		List sizes;
 		//if(sm ==null) sm = MainActivity.sm;
-		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
+		if (StateMediator.cameraMode == Protocol.CAMERA_MODE) {
 			sizes = myCamParam.getSupportedPictureSizes();
 		}
 		else {
@@ -218,7 +218,7 @@ public class CameraController {
 		List sizes;
 		Camera.Size setting;
 		//if(sm == null) sm = MainActivity.sm;
-		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
+		if (StateMediator.cameraMode == Protocol.CAMERA_MODE) {
 			sizes = myCamParam.getSupportedPictureSizes();
 		}
 		else {
@@ -273,9 +273,11 @@ public class CameraController {
 		}
 	}
 	public void stopVideo(){
-		mMediaRecorder.stop();  // stop the recording
+		if(mMediaRecorder!=null)
+			mMediaRecorder.stop();  // stop the recording
 
-		mCamera.lock();         // take camera access back from MediaRecorder
+		if(mCamera!=null)
+			mCamera.lock();         // take camera access back from MediaRecorder
 		releaseMediaRecorder(); // release the MediaRecorder object
 		StateMediator.stopCapturing();
 		Intent intent = new Intent(Protocol.BROADCAST_ACTION_STOP);

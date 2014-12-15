@@ -11,7 +11,7 @@ import android.util.Log;
 public class Util {
 	public static String getNewOutputFolder() {
 		String ext = "";
-		if (StateMediator.cameraMode.equals(Protocol.CAMERA_MODE)) {
+		if (StateMediator.cameraMode == Protocol.CAMERA_MODE) {
 			ext = Protocol.UPLOAD_IMAGE_DIR;
 		} else {
 			ext = Protocol.UPLOAD_VIDEO_DIR;
