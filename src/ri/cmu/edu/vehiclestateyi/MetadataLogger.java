@@ -18,7 +18,7 @@ public class MetadataLogger {
 		this.curDirName = dir;
 	}
 	public static File outputFolder = null;
-	public String timeStamp;
+	public static volatile String timeStamp;
 
 	/* File extensions */
 
@@ -33,21 +33,24 @@ public class MetadataLogger {
 	public void setTime(String timestamp) {
 		timeStamp = timestamp;
 	}
-	public void setTimestampHeader() {
+	public void setTimestampHeader(String starttime) {
 		try {
 
 			String filename = Protocol.STARTSTOP_FILENAME;
-			String starttime = new SimpleDateFormat(Protocol.dateFormat).format(new Date());
 
 
 			Log.e("LOGGER",filename);
 			if(curDirName!=null){
-				String fullPath = new File( curDirName+ "/"+ filename).getPath();
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
+				String fullPath = new File( curDirName+ "/"+ filename + "-"+starttime + Protocol.FILE_FORMAT).getPath();
 
-				out.println(starttime);
+				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
+				BufferedReader br = new BufferedReader(new FileReader(fullPath));
+				if(br.readLine() == null){
+					out.println(starttime);
+				}
 
 				out.close();
+
 			}
 
 		} catch (IOException e) {
@@ -63,12 +66,19 @@ public class MetadataLogger {
 
 			String filename = Protocol.STARTSTOP_FILENAME;
 			Log.e("LOGGER",filename);
-			String fullPath = new File(curDirName + "/" + filename).getPath();
-			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
+			String fullPath = new File(curDirName + "/" + filename + "-"+timeStamp+Protocol.FILE_FORMAT).getPath();
+			BufferedReader br = new BufferedReader(new FileReader(fullPath));
+			int cnt = 0;
+			while(br.readLine()!=null){
+				cnt++;
+			}
+			if(cnt <=1){
+				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 
-			out.println(endtime);
+				out.println(endtime);
 
-			out.close();
+				out.close();
+			}
 
 
 		} catch (IOException e) {
@@ -84,7 +94,7 @@ public class MetadataLogger {
 
 			String filename = Protocol.fileExtension.get(sensorName);
 			//Log.e("LOGGER",filename);
-			String fullPath = new File(curDirName + "/"+ filename).getPath();
+			String fullPath = new File(curDirName + "/"+ filename + "-"+timeStamp+Protocol.FILE_FORMAT).getPath();
 			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 			/* current time*/
 			out.println(time +": "+value[0] + ", " + value[1] + ", "+value[2]);
@@ -103,8 +113,8 @@ public class MetadataLogger {
 
 
 			String filename = Protocol.fileExtension.get(Protocol.SensorNames.GPS);
-			
-			String fullPath = new File(curDirName + "/" + filename).getPath();
+
+			String fullPath = new File(curDirName + "/" + filename + "-"+timeStamp+Protocol.FILE_FORMAT).getPath();
 			Log.e("LOGGER",fullPath);
 			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fullPath, true)));
 			/* current time*/

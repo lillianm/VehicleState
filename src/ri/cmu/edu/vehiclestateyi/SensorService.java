@@ -38,6 +38,7 @@ public class SensorService extends Service{
 	private final static int EPSILON = 100;
 	private static final float NS2S = 1.0f / 1000000000.0f;
 	private volatile static String curDirName = null;
+	private volatile static String curTimeStamp = null;
 	private static SensorService self;
 	private static MetadataLogger logger;
 	public class SensorBinder extends Binder{
@@ -59,6 +60,12 @@ public class SensorService extends Service{
 				if(intent.hasExtra(Protocol.CURRENT_DIR_NAME)){
 					curDirName = intent.getStringExtra(Protocol.CURRENT_DIR_NAME);
 					Log.d(TAG, curDirName);
+					if(intent.hasExtra(Protocol.CURRENT_TIMESTAMP)){
+						curTimeStamp = intent.getStringExtra(Protocol.CURRENT_TIMESTAMP);
+						Log.d(TAG, curTimeStamp);
+
+					}
+
 
 				}
 				else{
@@ -98,8 +105,10 @@ public class SensorService extends Service{
 			case Sensor.TYPE_GRAVITY:
 				//cp.setGravity(event.values);
 				if(startLogging){
-					if(logger == null)
+					if(logger == null){
 						logger = new MetadataLogger(curDirName);
+					}
+					logger.setTime(curTimeStamp);
 					logger.appendToFileSingleSensor(Protocol.SensorNames.GRAVITY, event.values);
 				}
 				break;
@@ -116,6 +125,7 @@ public class SensorService extends Service{
 				if(startLogging){
 					if(logger == null)
 						logger = new MetadataLogger(curDirName);
+					logger.setTime(curTimeStamp);
 					logger.appendToFileSingleSensor(Protocol.SensorNames.LINEAR_ACCELERATION, linear_acceleration);
 				}
 				//				ctx.usr_wrapper.compassView.updateData(linear_acceleration[1]);
@@ -134,6 +144,7 @@ public class SensorService extends Service{
 				{
 					if(logger == null)
 						logger = new MetadataLogger(curDirName);
+					logger.setTime(curTimeStamp);
 					logger.appendToFileSingleSensor(Protocol.SensorNames.ORIENTATION, event.values);
 				}
 				//Log.d(TAG,"Orientation"+event.values[0]+cp.azimuth);
@@ -150,8 +161,9 @@ public class SensorService extends Service{
 					float axisZ = event.values[2];
 					//cp.setGyroscope(event.values);
 					if(startLogging){
-						if(logger == null)
+						if(logger == null || logger.curDirName !=curDirName)
 							logger = new MetadataLogger(curDirName);
+						logger.setTime(curTimeStamp);
 						logger.appendToFileSingleSensor(Protocol.SensorNames.GYROSCOPE, event.values);
 					}
 

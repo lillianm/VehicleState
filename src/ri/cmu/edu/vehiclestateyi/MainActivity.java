@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,6 +14,7 @@ import android.content.SharedPreferences;
 import android.graphics.LightingColorFilter;
 import android.hardware.SensorManager;
 import android.os.*;
+import android.provider.Settings;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -34,13 +36,13 @@ public class MainActivity extends Activity {
 
 	/* the folder name of video and context data files*/
 	public static volatile String curDirName;
-	
+
 	public static boolean upToDate = false;
 	public static boolean uploading = false;
 	public static boolean noFiles = false;
 	public static boolean interruptedUpload = false;
 
-	
+
 
 
 	/* Dropbox */
@@ -53,8 +55,25 @@ public class MainActivity extends Activity {
 	private long lastClick;
 	private boolean screenOn = false;
 	private static final String TAG = "MainActivity";
-	private MainActivity self = this;
+	private static MainActivity self ;
 	private Button toggleButton = null;
+	private static volatile boolean dismissGPS = false;
+	private static volatile boolean gpsDialogOn = false;
+	public static class MainActivityReceiver extends BroadcastReceiver{
+		public MainActivityReceiver(){}
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if(intent.getAction().equals(Protocol.GPS_OUTPUT_ZERO)){
+				if(mCamera!=null && StateMediator.isRunning){
+					mCamera.stopVideo();
+				}
+				if(!dismissGPS && !gpsDialogOn ) enableDialog();
+			}
+
+
+		}
+
+	}
 
 	/* Handler */
 	Handler handler = new Handler() {
@@ -64,9 +83,6 @@ public class MainActivity extends Activity {
 				Log.e("uploading!", String.valueOf(uploading));
 				setUploadText((Button) findViewById(R.id.button_upload));
 			}
-			if(msg.what == Protocol.GPS_OUTPUT_ZERO){
-				Toast.makeText(getApplicationContext(), "GPS output is ZERO!", Toast.LENGTH_SHORT).show();;
-			}
 		}
 	};
 
@@ -74,7 +90,7 @@ public class MainActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		self = this;
 		lastClick = System.currentTimeMillis();
 		/* Keep screen lit */
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -82,21 +98,21 @@ public class MainActivity extends Activity {
 		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
 		//sm = new StateMediator(this);
 		StateMediator.setCameraMode(settings.getBoolean("cameraOn", Protocol.VIDEO_MODE));
-		mCamera = new CameraController(this);
-
-		upToDate = settings.getBoolean("upToDate", false);
-		StateMediator.externalStore = settings.getInt("saveLocation", 0) == 1;
-		mCamera.setResolution(settings.getInt("resolution", 0));
-		//noFiles = settings.getBoolean("noFiles", false);
-
-		mDbxAcctMgr = null;
-		if (mDbxAcctMgr != null && !mDbxAcctMgr.hasLinkedAccount()) {
-			mDbxAcctMgr.startLink(this, Protocol.REQUEST_LINK_TO_DBX);
-		}
-		else {
-			finalizeOutput();
-			setMainScreen();
-		}
+		//		mCamera = new CameraController(this);
+		//
+		//		upToDate = settings.getBoolean("upToDate", false);
+		//		StateMediator.externalStore = settings.getInt("saveLocation", 0) == 1;
+		//		mCamera.setResolution(settings.getInt("resolution", 0));
+		//		//noFiles = settings.getBoolean("noFiles", false);
+		//
+		//		mDbxAcctMgr = null;
+		//		if (mDbxAcctMgr != null && !mDbxAcctMgr.hasLinkedAccount()) {
+		//			mDbxAcctMgr.startLink(this, Protocol.REQUEST_LINK_TO_DBX);
+		//		}
+		//		else {
+		//			finalizeOutput();
+		//			setMainScreen();
+		//		}
 
 		toggleButton = (Button) findViewById(R.id.button_toggle);
 	}
@@ -112,6 +128,18 @@ public class MainActivity extends Activity {
 		}
 		return false;
 	}
+
+	/* GPS and Sensor Service Helper functions */
+	private boolean isSensorServiceRunning() {
+		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+			if (service.service.getShortClassName().equals(SensorService.class.getSimpleName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	/* GPS and Sensor Connecton */
 	private ServiceConnection gpsServiceConnection = new ServiceConnection(){
@@ -484,7 +512,7 @@ public class MainActivity extends Activity {
 			lastClick = System.currentTimeMillis();
 			Log.w(TAG,"LISTENER ");
 			Log.w(TAG,""+StateMediator.cameraRunning);
-			
+
 			/* */
 			if(StateMediator.cameraMode == Protocol.CAMERA_MODE){
 				if(!StateMediator.cameraRunning) { 
@@ -539,6 +567,16 @@ public class MainActivity extends Activity {
 	private View.OnClickListener exitListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
+
+			mCamera.stopVideo();
+			mCamera.kill();
+			StateMediator.setCameraRunningStatus(false);
+			Intent gpsintent = new Intent(self, GPSCollector.class);
+			unbindService(gpsServiceConnection);
+			stopService(gpsintent);
+			Intent sensorIntent = new Intent(self, SensorService.class);
+			unbindService(sensorServiceConnection);
+			stopService(sensorIntent);
 			finish();
 		}
 	};
@@ -582,15 +620,36 @@ public class MainActivity extends Activity {
 
 		Log.w("On resume", "On Resume");
 		//if(mMetadataLogger == null) mMetadataLogger = new MetadataLogger();
-		if(mCamera == null) {
-			mCamera = new CameraController(this);
+		//if(mCamera == null) {
+
+		//}
+
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
+		//sm = new StateMediator(this);
+		StateMediator.setCameraMode(settings.getBoolean("cameraOn", Protocol.VIDEO_MODE));
+		mCamera = new CameraController(this);
+
+		upToDate = settings.getBoolean("upToDate", false);
+		StateMediator.externalStore = settings.getInt("saveLocation", 0) == 1;
+		mCamera.setResolution(settings.getInt("resolution", 0));
+		//noFiles = settings.getBoolean("noFiles", false);
+
+		mDbxAcctMgr = null;
+		if (mDbxAcctMgr != null && !mDbxAcctMgr.hasLinkedAccount()) {
+			mDbxAcctMgr.startLink(this, Protocol.REQUEST_LINK_TO_DBX);
 		}
+		else {
+			finalizeOutput();
+			setMainScreen();
+		}
+
 
 		Intent gpsIntent  = new Intent(this, GPSCollector.class);
 		if(!isGPSServiceRunning()){
 			//Log.d(TAG,"GPS service is not running");
 			startService(gpsIntent);
-			
 
 		}
 		bindService(gpsIntent, gpsServiceConnection, Context.BIND_AUTO_CREATE);
@@ -599,7 +658,7 @@ public class MainActivity extends Activity {
 		if(!isGPSServiceRunning()){
 			//Log.d(TAG,"GPS service is not running");
 			startService(sensorIntent);
-			
+
 
 		}
 		bindService(sensorIntent, sensorServiceConnection, Context.BIND_AUTO_CREATE);
@@ -610,17 +669,20 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onPause() {
-		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putBoolean("upToDate", upToDate);
-		editor.putBoolean("noFiles", noFiles);
-
-		// Commit the edits!
-		editor.commit();
+		//		SharedPreferences settings = getSharedPreferences(Protocol.PREFS_NAME, 0);
+		//		SharedPreferences.Editor editor = settings.edit();
+		//		editor.putBoolean("upToDate", upToDate);
+		//		editor.putBoolean("noFiles", noFiles);
+		//
+		//		// Commit the edits!
+		//		editor.commit();
+		//		super.onPause();
+		//		pause();
 		super.onPause();
-		pause();
-
-
+		mCamera.stopVideo();
+		mCamera.kill();
+		StateMediator.setCameraRunningStatus(false);
+		finish();
 	}
 
 	@Override
@@ -628,36 +690,90 @@ public class MainActivity extends Activity {
 		super.onStop();
 		/* stop video has already send the stop broadcast */
 		mCamera.stopVideo();
-		mCamera.kill();
-		
-		
+		StateMediator.setCameraRunningStatus(false);
+		//mCamera.kill();
+
+
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		mCamera.stopVideo();
-		mCamera.kill();
-		Intent gpsintent = new Intent(this, GPSCollector.class);
-		unbindService(gpsServiceConnection);
-		stopService(gpsintent);
-		Intent sensorIntent = new Intent(this, SensorService.class);
-		unbindService(sensorServiceConnection);
-		stopService(sensorIntent);
+		if(mCamera!=null){
+			mCamera.stopVideo();
+			mCamera.kill();
+		}
+		if(isGPSServiceRunning()){
+			Intent gpsintent = new Intent(this, GPSCollector.class);
+			unbindService(gpsServiceConnection);
+			stopService(gpsintent);
+		}
+		if(isSensorServiceRunning()){
+			Intent sensorIntent = new Intent(this, SensorService.class);
+			unbindService(sensorServiceConnection);
+			stopService(sensorIntent);
+		}
+		finish();
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-	    if ((keyCode == KeyEvent.KEYCODE_BACK)) { //Back key pressed
-	       setMainScreen();
-	        return true;
-	    }
-	    return super.onKeyDown(keyCode, event);
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) { //Back key pressed
+			if(!StateMediator.cameraRunning)
+				setMainScreen();
+				return true;
+		}
+		if ((keyCode == KeyEvent.KEYCODE_HOME)) { //Back key pressed
+			mCamera.stopVideo();
+			mCamera.kill();
+
+			StateMediator.setCameraRunningStatus(false);
+			finish();
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
 	}
 
 	void showToast(String msg) {
 		Toast error = Toast.makeText(self, msg, Toast.LENGTH_LONG);
 		error.show();
+	}
+
+	public static void enableDialog(){
+
+		gpsDialogOn = true;
+		if(self == null) return;
+		AlertDialog.Builder builder = new AlertDialog.Builder(self);
+		builder.setTitle("GPS Settings");
+		builder.setMessage("GPS is not enabled, Please enable the GPS Service");
+
+		builder.setPositiveButton("Got it",new DialogInterface.OnClickListener(){
+			@Override 
+			public void onClick(DialogInterface dialog, int whichButton){
+				dialog.dismiss();
+				mCamera.stopVideo();
+				mCamera.kill();
+				//					Intent gpsintent = new Intent(self, GPSCollector.class);
+				//					//unbindService(gpsServiceConnection);
+				//					self.stopService(gpsintent);
+				//					Intent sensorIntent = new Intent(self, SensorService.class);
+				//					//unbindService(sensorServiceConnection);
+				//					self.stopService(sensorIntent);
+				//					gpsDialogOn = false;
+			}
+		});
+		builder.setNegativeButton("Do not show again",new DialogInterface.OnClickListener(){
+			@Override 
+			public void onClick(DialogInterface dialog, int whichButton){
+				dialog.dismiss();	
+				dismissGPS = true;
+				gpsDialogOn = false;
+			}
+		});
+
+
+		builder.show();
 	}
 
 

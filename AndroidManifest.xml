@@ -5,7 +5,7 @@
 
     <uses-sdk
         android:minSdkVersion="12"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="17" />
 
     <application
         android:allowBackup="false"
@@ -22,6 +22,12 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name="ri.cmu.edu.vehiclestateyi.MainActivity$MainActivityReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MainActivity" />
+                <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.stop.GPS_OUTPUT_ZERO" />
+            </intent-filter>
+        </receiver>
         <receiver android:name="ri.cmu.edu.vehiclestateyi.GPSCollector$GPSReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.MainActivity" />
@@ -36,7 +42,6 @@
                 <action android:name="ri.cmu.edu.vehiclestateyi.MainActivity.stop" />
             </intent-filter>
         </receiver>
-        
 
         <service android:name="ri.cmu.edu.vehiclestateyi.GPSCollector" >
         </service>

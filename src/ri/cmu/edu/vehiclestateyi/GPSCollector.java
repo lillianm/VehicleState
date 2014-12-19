@@ -2,6 +2,7 @@ package ri.cmu.edu.vehiclestateyi;
 
 
 import java.util.Timer;
+
 import java.util.TimerTask;
 
 import android.app.AlarmManager;
@@ -177,11 +178,17 @@ public class GPSCollector extends Service implements LocationListener {
 
 			}
 			if(currentBestLocation!=null){
-				if(logger == null || logger.curDirName == null){
+				if(logger == null || !curDirName.equals(logger.curDirName)){
 					logger = new MetadataLogger(curDirName);
 				}
 				logger.appendToFileGPS(currentBestLocation.getLatitude(), currentBestLocation.getLongitude());
 				Log.w("GPS Enabled", currentBestLocation.toString());
+			}
+			else{
+				Log.e(TAG, "GPS is zero");
+				Intent intent = new Intent(Protocol.GPS_OUTPUT_ZERO);
+				
+				sendBroadcast(intent);
 			}
 		}
 		return 0;
@@ -204,30 +211,7 @@ public class GPSCollector extends Service implements LocationListener {
 		return 0;
 	}
 
-	//	public void enableDialog(){
-	//
-	//		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-	//		builder.setTitle("GPS Settings");
-	//		builder.setMessage("GPS is not enabled, do you want to enable the GPS Service?");
-	//
-	//		builder.setPositiveButton("Enable",new DialogInterface.OnClickListener(){
-	//			@Override 
-	//			public void onClick(DialogInterface dialog, int whichButton){
-	//				Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-	//				context.startActivity(intent);
-	//			}
-	//		});
-	//		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
-	//			@Override
-	//			public void onClick(DialogInterface dialog, int whichButton){
-	//				dialog.dismiss();
-	//			}
-	//		});
-	//
-	//		builder.show();
-	//	}
-	//
-
+	
 	@Override
 	public void onLocationChanged(Location location) {
 		// TODO Auto-generated method stub
@@ -260,7 +244,7 @@ public class GPSCollector extends Service implements LocationListener {
 			// A new location is always better than no location
 			return location;
 		}
-
+		if(location==null) return currentBestLocation;
 		// Check whether the new location fix is newer or older
 		long timeDelta = location.getTime() - currentBestLocation.getTime();
 		int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());

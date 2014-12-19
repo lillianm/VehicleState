@@ -57,7 +57,7 @@ public class CameraController {
 			c.release();
 		}
 
-		cache = new LinkedList<byte[]>();
+		//cache = new LinkedList<byte[]>();
 	}
 
 	/** A safe way to get an instance of the Camera object. */
@@ -174,25 +174,25 @@ public class CameraController {
 		// Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
 		mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-		// Step 4: Set output file
-		mMediaRecorder.setOutputFile(getOutputMediaFile(MEDIA_TYPE_VIDEO).toString());
+//		// Step 4: Set output file
+//		mMediaRecorder.setOutputFile(getOutputMediaFile(MEDIA_TYPE_VIDEO).toString());
 
 		// Step 5: Set the preview output
 		mMediaRecorder.setPreviewDisplay(mPreview.getHolder().getSurface());
 		mMediaRecorder.setCaptureRate(captureRate);
 
-		// Step 6: Prepare configured MediaRecorder
-		try {
-			mMediaRecorder.prepare();
-		} catch (IllegalStateException e) {
-			Log.d("CameraActivity", "IllegalStateException preparing MediaRecorder: " + e.getMessage());
-			releaseMediaRecorder();
-			return false;
-		} catch (IOException e) {
-			Log.d("CameraActivity", "IOException preparing MediaRecorder: " + e.getMessage());
-			releaseMediaRecorder();
-			return false;
-		}
+//		// Step 6: Prepare configured MediaRecorder
+//		try {
+//			mMediaRecorder.prepare();
+//		} catch (IllegalStateException e) {
+//			Log.d("CameraActivity", "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+//			releaseMediaRecorder();
+//			return false;
+//		} catch (IOException e) {
+//			Log.d("CameraActivity", "IOException preparing MediaRecorder: " + e.getMessage());
+//			releaseMediaRecorder();
+//			return false;
+//		}
 		return true;
 	}
 
@@ -256,15 +256,36 @@ public class CameraController {
 
 		// initialize video camera
 		if (prepareVideoRecorder()) {
-			Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
-			intent.putExtra(Protocol.CURRENT_DIR_NAME, MainActivity.curDirName);
-			ctx.sendBroadcast(intent);
+			// Step 4: Set output file
+			String starttime = new SimpleDateFormat(Protocol.dateFormat).format(new Date());
+			mMediaRecorder.setOutputFile(getOutputMediaFile(MEDIA_TYPE_VIDEO, starttime).toString());
+
+			// Step 6: Prepare configured MediaRecorder
+			try {
+				mMediaRecorder.prepare();
+			} catch (IllegalStateException e) {
+				Log.d("CameraActivity", "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+				releaseMediaRecorder();
+				return;
+				
+			} catch (IOException e) {
+				Log.d("CameraActivity", "IOException preparing MediaRecorder: " + e.getMessage());
+				releaseMediaRecorder();
+				return;
+			}
 
 			mMediaRecorder.start();
-			StateMediator.startCapturing();
-			MetadataLogger logger = new MetadataLogger(MainActivity.curDirName);
-			logger.setTimestampHeader();
+			
+			Intent intent = new Intent(Protocol.BROADCAST_ACTION_START);
+			intent.putExtra(Protocol.CURRENT_DIR_NAME, MainActivity.curDirName);
+			intent.putExtra(Protocol.CURRENT_TIMESTAMP, starttime);
+			Log.e("Camera Controller",MainActivity.curDirName);
+			ctx.sendBroadcast(intent);
 
+			
+			MetadataLogger logger = new MetadataLogger(MainActivity.curDirName);
+			logger.setTimestampHeader(starttime);
+			StateMediator.startCapturing();
 
 
 		} else {
@@ -287,23 +308,23 @@ public class CameraController {
 
 	}
 
-	/** Create a file Uri for saving an image or video */
-	private Uri getOutputMediaFileUri(int type){
-		return Uri.fromFile(getOutputMediaFile(type));
-	}
+//	/** Create a file Uri for saving an image or video */
+//	private Uri getOutputMediaFileUri(int type){
+//		return Uri.fromFile(getOutputMediaFile(type, starttime));
+//	}
 
 	/** Create a File for saving an image or video */
-	File getOutputMediaFile(int type) {
+	File getOutputMediaFile(int type, String timeStamp) {
 		File mediaStorageDir = new File(ctx.curDirName);
 		Log.d("outputFolder", String.valueOf(mediaStorageDir));
 
 		File mediaFile;
 		if (type == MEDIA_TYPE_IMAGE){
 			mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-					"IMG_"+ "hehe" + ".jpg");
+					"IMG_"+ timeStamp + ".jpg");
 		} else if(type == MEDIA_TYPE_VIDEO) {
 			mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-					"VID_"+ "hehe" + ".mp4");
+					"VID_"+ timeStamp + ".mp4");
 			Log.e("CameraController",mediaFile.getPath());
 		} else {
 			return null;
